@@ -1,45 +1,16 @@
-/**
- *
- * THS IS PURE JS PART
- *
- */
-
-// const btn = document.querySelector('#button')
-// if (btn) btn.addEventListener('click', loadTabs)
-// function loadTabs() {
-//   // This is the request to obtain an array of active tabs. It returns a promise.
-//   // It accepts a config object (see docs)
-//   browser.tabs.query({ currentWindow: true }).then((tabs) => {
-//     const results = document.querySelector('#results'),
-//       parts = []
-//     for (let tab of tabs) {
-//       parts.push(`<li>${tab.title}: ${tab.url}</li>`)
-//     }
-//     results.innerHTML = parts.join('')
-//   })
-// }
-
-/**
- *
- * * THS IS PURE VUE PART !!
- *
- */
-
-// import Vue from 'vue'
-// import Vue from 'vue.esm-bundler.js'
-// import Vue from 'vue/dist/vue.esm-bundler.js'
-// import * as Vue from 'vue/dist/vue.esm-bundler.js'
-// import { createApp } from 'vue';
 import '@/assets/main.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-
 import App from '@/App.vue'
-// import router from 'router'
+
+// SHARED CONSTANTS
+const sharedPiniaStoreAcrossTheApps = createPinia()
+
+// APP 1  - POP up app used in "default_popup": "popup.html"
+
 const app = createApp(App)
-app.use(createPinia())
-// app.use(router)
+app.use(sharedPiniaStoreAcrossTheApps)
 const el = document.getElementById('app')
 
 if (el) {
@@ -47,3 +18,24 @@ if (el) {
 } else {
   console.error('Error: #app element not found')
 }
+
+// APP 2 - the same but mounted on the main browser page instead of the popup on extention
+
+if (!document.getElementById('my-vue-header')) {
+  const headerDiv = document.createElement('div')
+  headerDiv.id = 'my-vue-header'
+  document.body.insertBefore(headerDiv, document.body.firstChild)
+}
+const style = document.createElement('style')
+style.textContent = `
+  #my-vue-header {
+    top: 0; left: 0; width: 100%;
+    z-index: 9999;
+    background: #333; color: #fff;
+    padding: 10px 0; text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  body { padding-top: 60px; }
+`
+document.head.appendChild(style)
+app.mount('#my-vue-header')

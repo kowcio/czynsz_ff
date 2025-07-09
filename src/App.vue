@@ -1,7 +1,7 @@
 <template>
-  <div>Hello VUE 2 plugin</div>
+  <div>Hello VUE 33 plugin</div>
   <!-- Empty template: nothing rendered by Vue -->
-  <button @click="addTopLevelSticker">Add sticker</button>
+  <!-- <button @click="addTopLevelSticker">Add sticker</button> -->
   <button @click="getTabs">List Tabs</button>
 
   <ul>
@@ -27,6 +27,9 @@ function getTabs() {
     tabs.value = result
   })
 }
+onMounted(() => {
+  document.body.style.border = '5px solid green'
+})
 </script>
 
 <style>

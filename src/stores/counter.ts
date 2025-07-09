@@ -1,12 +1,38 @@
-import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
+import type { Cost } from '../models/Cost.ts'
 
-export const useCounterStore = defineStore('counter', () => {
-  const count = ref(0)
-  const doubleCount = computed(() => count.value * 2)
-  function increment() {
-    count.value++
-  }
+export interface MyStoreState {
+  counter: number
+  name: string
+  items: Cost[]
+}
 
-  return { count, doubleCount, increment }
+export const useMyStore = defineStore('myStore', {
+  state: () =>
+    ({
+      // initial state
+      counter: 0,
+      name: 'John Doe',
+      items: [] as Cost[],
+    }) as MyStoreState,
+  getters: {
+    // getters
+    doubleCounter: (state) => state.counter * 2,
+    getItemById: (state) => (name: string) => state.items.find((item: Cost) => item.name === name),
+  },
+  actions: {
+    // actions
+    increment() {
+      this.counter++
+    },
+    decrement() {
+      this.counter--
+    },
+    addItem(item: Cost) {
+      this.items.push(item)
+    },
+    removeItem(name: string) {
+      this.items = this.items.filter((item: Cost) => item.name !== name)
+    },
+  },
 })
