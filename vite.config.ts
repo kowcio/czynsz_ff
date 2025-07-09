@@ -35,28 +35,27 @@ export default defineConfig({
     outDir: 'dist',
     minify: false,
     cssMinify: false,
-    sourcemap: true,
     // manifest: 'manifest.json',
     assetsDir: 'js',
-    rollupOptions: {
-      // input: {
-      // popup: 'popup.html', // Entry for your popup UI
-      // Add more entries as needed (e.g., options page)
-      // },
-      // Ensure all dependencies are bundled (not externalized)
-      external: [],
-      output: {
-        // Prevent code splitting
-        manualChunks: undefined,
-        inlineDynamicImports: true,
-      },
-    },
-    lib: {
-      entry: 'src/App.vue', // Entry point (can be a .js or .vue file)
-      name: 'my-plugin', // Global name for UMD/IIFE
-      formats: ['umd', 'es'],
-      fileName: 'my-plugin', // Output file name
-    },
+    // rollupOptions: {
+    // input: {
+    // popup: 'popup.html', // Entry for your popup UI
+    // Add more entries as needed (e.g., options page)
+    // },
+    // Ensure all dependencies are bundled (not externalized)
+    // external: [],
+    // output: {
+    // Prevent code splitting
+    // manualChunks: undefined,
+    // inlineDynamicImports: true,
+    // },
+    // },
+    // lib: {
+    //   entry: 'src/App.vue', // Entry point (can be a .js or .vue file)
+    //   name: 'my-plugin', // Global name for UMD/IIFE
+    //   formats: ['umd', 'es'],
+    //   fileName: 'my-plugin', // Output file name
+    // },
 
     // copy: [
     //   {
@@ -68,7 +67,7 @@ export default defineConfig({
 
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@': './src',
     },
   },
 })

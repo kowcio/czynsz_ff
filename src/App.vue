@@ -1,81 +1,34 @@
-<script setup lang="ts">
-// import { RouterLink, RouterView } from 'vue-router'
-// import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
-  <div>Hello VUE plugin</div>
+  <div>Hello VUE 2 plugin</div>
   <!-- Empty template: nothing rendered by Vue -->
+  <button @click="addTopLevelSticker">Add sticker</button>
+  <button @click="getTabs">List Tabs</button>
+
+  <ul>
+    <li v-for="tab in tabs" :key="tab.id">{{ tab.title }} - {{ tab.url }}</li>
+  </ul>
 </template>
 
-<script lang="ts">
-export default {
-  mounted() {
-    document.documentElement.style.border = '5px solid yellow'
-  },
+<script setup lang="ts">
+import { onMounted } from 'vue'
+
+import { ref } from 'vue'
+import browser from 'webextension-polyfill'
+import type { Tabs } from 'webextension-polyfill'
+
+onMounted(() => {
+  console.log('Component mounted!')
+})
+
+const tabs = ref<Tabs.Tab[]>([]) // Explicitly type the ref
+
+function getTabs() {
+  browser.tabs.query({ currentWindow: true }).then((result) => {
+    tabs.value = result
+  })
 }
 </script>
 
-<style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-nav {
-  width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
-}
-
-nav a.router-link-exact-active {
-  color: var(--color-text);
-}
-
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
-}
-
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
-}
-
-nav a:first-of-type {
-  border: 0;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
-
-    padding: 1rem 0;
-    margin-top: 1rem;
-  }
-}
+<style>
+/* Your styles here */
 </style>

@@ -7,7 +7,7 @@
   "content_scripts": [
     {
       "matches": ["*://*/*"],
-      "js": ["borderify.js", "app22.js", "src/content.js"]
+      "js": ["app22.js"]
     }
   ],
   "browser_specific_settings": {
@@ -25,5 +25,6 @@
     "default_title": "Opens MyExtension",
     "default_popup": "app.html"
   },
+  "chrome_url_overrides": {},
   "permissions": ["tabs", "activeTab", "bookmarks", "clipboardRead", "storage"]
 }
