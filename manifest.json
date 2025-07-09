@@ -1,18 +1,28 @@
 {
   "description": "Adds a solid red border to all webpages matching mozilla.org. See https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Examples#borderify",
-  "manifest_version": 2,
-  "name": "Borderify",
-  "version": "1.0",
-  "homepage_url": "https://github.com/mdn/webextensions-examples/tree/master/borderify",
+  "manifest_version": 3,
+  "name": "Czynsz_FF_estate_care",
+  "version": "1.0.0",
+  "homepage_url": "https://www.perplexity.ai/",
   "content_scripts": [
     {
-      "matches": ["*://*.google.com/*"],
-      "js": ["borderify.js"]
+      "matches": ["*://*/*"],
+      "js": ["borderify.js", "app.js"]
     }
   ],
+  "host_permissions": ["*://*/*"],
   "browser_specific_settings": {
     "gecko": {
       "id": "borderify@example.com"
     }
-  }
+  },
+  "icons": {
+    "48": "public/favicon.ico"
+  },
+  "action": {
+    "default_icon": "public/favicon.ico",
+    "default_title": "Opens MyExtension",
+    "default_popup": "app.html"
+  },
+  "permissions": ["tabs", "activeTab", "bookmarks", "clipboardRead", "storage"]
 }
