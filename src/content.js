@@ -9,13 +9,14 @@ if (!document.getElementById('my-vue-header')) {
 const style = document.createElement('style')
 style.textContent = `
   #my-vue-header {
-    position: fixed;
-    top: 0; left: 0; width: 100%;
+    top: 2%; left: 10%; width: 80%;
+    margin:2%;
     z-index: 9999;
+  background-color: rgba(255, 166, 0, 0.12);
     padding: 10px 0; text-align: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
   }
-  body { padding: 30px; }
+
 `
 document.head.appendChild(style)
 
