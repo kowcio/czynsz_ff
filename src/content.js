@@ -12,11 +12,10 @@ style.textContent = `
     position: fixed;
     top: 0; left: 0; width: 100%;
     z-index: 9999;
-    background: #333; color: #fff;
     padding: 10px 0; text-align: center;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   }
-  body { padding-top: 60px; }
+  body { padding: 30px; }
 `
 document.head.appendChild(style)
 

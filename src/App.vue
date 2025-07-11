@@ -28,7 +28,7 @@ function getTabs() {
   })
 }
 onMounted(() => {
-  document.body.style.border = '5px solid green'
+  document.body.style.border = '5px solid orange'
 })
 </script>
 
