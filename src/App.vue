@@ -59,7 +59,7 @@ onMounted(() => {
 })
 
 const finanse = ref<Finanse[]>([])
-const dokumenty = ref<DocumentPozycje[]>([]) //DocumentPozycje
+const dokumenty = ref<Record<string, any>[]>([]) //DocumentPozycje
 const kontaFinansowe = ref<string[]>([])
 async function getTheData() {
   const numerRachunku = 113986
@@ -107,6 +107,7 @@ async function getTheData() {
       return nestedPozycje
         .map((pozycja2) => pozycja2.Dokument)
         .filter((dokument) => !!dokument && Object.keys(dokument).length > 0)
+        .map((dokument) => dokument as Record<string, any>)
     })
   })
 
@@ -130,7 +131,7 @@ async function getTheData() {
   console.log('Pozycje ; ', dokumentISzczegoly[0].SzczegolyPozycje)
   dokumentISzczegoly.forEach((dokument) => {
     console.log(dokument.Opis, dokument.Numer, dokument.Opis, dokument.Kwota)
-    dokument.SzczegolyPozycje?.forEach((pozycja) => {
+    dokument.SzczegolyPozycje?.forEach((pozycja: { SkladnikOpl: any; Brutto: any; Netto: any }) => {
       //return for front test in cnsole
       console.log(pozycja.SkladnikOpl, pozycja.Brutto, pozycja.Netto)
     })
