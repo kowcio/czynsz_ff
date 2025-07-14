@@ -23,7 +23,14 @@ import axios from 'axios'
 import { ref } from 'vue'
 import browser from 'webextension-polyfill'
 import type { Tabs } from 'webextension-polyfill'
-import type { Finanse, HistoriaRachunku } from './models/EstateCareModels'
+import type {
+  Dokument,
+  Finanse,
+  HistoriaRachunku,
+  Pozycje,
+} from './models/EstateCare/DajDrzewoFinHistoria'
+import type { DocumentPozycje } from './models/EstateCare/DajDokSzczegoly'
+
 onMounted(() => {
   console.log('Component mounted!')
 })
@@ -47,12 +54,14 @@ function getTabs() {
   })
 }
 onMounted(() => {
-  document.body.style.border = '5px solid orange'
+  //add css when mounted
+  // document.body.style.border = '5px solid black'
 })
 
 const finanse = ref<Finanse[]>([])
+const dokumenty = ref<DocumentPozycje[]>([]) //DocumentPozycje
 const kontaFinansowe = ref<string[]>([])
-function getTheData() {
+async function getTheData() {
   const numerRachunku = 113986
   const data_od = '2024-01-01'
   const data_do = dayjs().format('YYYY-MM-DD') //'2025-08-11'
@@ -67,7 +76,10 @@ function getTheData() {
     // do something with the href
   })
   console.log(kontaFinansowe.value)
-  axios
+
+  // 1. pobranie listy finansów wraz z listą dokumentów gdzie są rozpisane szczegóły
+  // co i ile kosztuje
+  await axios
     .get(url, {
       headers: {
         Cookie: `POMSessionId=${POMSessionId}; at=${at}`,
@@ -75,16 +87,54 @@ function getTheData() {
     })
     .then((response) => {
       const historiaRachunku: HistoriaRachunku = response.data.data
-
       finanse.value = historiaRachunku.Finanse
       console.log(response.data)
       console.log(response.data.data)
-
       console.log(finanse.value)
     })
     .catch((error) => {
       console.error(error)
     })
+
+  // 2. Pobranie wszystkich dokumentów wraz z szczegółami
+  dokumenty.value = finanse.value.flatMap((finans) => {
+    // Use empty array if Pozycje is null or undefined
+    const pozycje = finans.Pozycje ?? []
+    return pozycje.flatMap((pozycja) => {
+      // Use empty array if nested Pozycje is null or undefined
+      const nestedPozycje = pozycja.Pozycje ?? []
+      // Map nested Pozycje to Dokument, filter out null/undefined Dokuments
+      return nestedPozycje
+        .map((pozycja2) => pozycja2.Dokument)
+        .filter((dokument) => !!dokument && Object.keys(dokument).length > 0)
+    })
+  })
+
+  console.log('The number of document ids is ', dokumenty.value.length, dokumenty.value)
+  // 4. Zapisanie w storze
+
+  localStorage.setItem('finanse', JSON.stringify(finanse.value))
+  localStorage.setItem('dokumenty', JSON.stringify(dokumenty.value))
+
+  //5. Przeiterować dokumenty i a nastepnie pogrupować miesiącem / i tym za co jest zapłata
+
+  //  Szczegoly?: Record<string, string>
+  const dokumentISzczegoly = dokumenty.value.map((dokument) => ({
+    Ident: dokument.Ident,
+    Opis: dokument.Opis,
+    Numer: dokument.Numer,
+    Kwota: dokument.Kwota,
+    SzczegolyPozycje: dokument.Szczegoly?.Pozycje,
+  }))
+
+  console.log('Pozycje ; ', dokumentISzczegoly[0].SzczegolyPozycje)
+  dokumentISzczegoly.forEach((dokument) => {
+    console.log(dokument.Opis, dokument.Numer, dokument.Opis, dokument.Kwota)
+    dokument.SzczegolyPozycje?.forEach((pozycja) => {
+      //return for front test in cnsole
+      console.log(pozycja.SkladnikOpl, pozycja.Brutto, pozycja.Netto)
+    })
+  })
 }
 </script>
 

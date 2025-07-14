@@ -11,12 +11,12 @@ const sharedPiniaStoreAcrossTheApps = createPinia()
 
 const app = createApp(App)
 app.use(sharedPiniaStoreAcrossTheApps)
-const el = document.getElementById('app')
+const el = document.getElementById('myapp')
 
 if (el) {
   app.mount(el)
 } else {
-  console.error('Error: #app element not found')
+  console.error('Error: #myapp element not found')
 }
 
 // APP 2 - the same but mounted on the main browser page instead of the popup on extention
@@ -27,16 +27,17 @@ if (!document.getElementById('my-vue-header')) {
   document.body.insertBefore(headerDiv, document.body.firstChild)
 }
 const style = document.createElement('style')
-style.textContent = `
+
+if (window.location.href.includes('rozliczenia.estatecare.pl')) {
+  style.textContent = `
   #my-vue-header {
-    top: 2%; left: 10%; width: 80%;
-    margin:2%;
+    top: 2%; left: 2%; width: 96%; height:5%;
+    margin: 2%;
     z-index: 9999;
-  background-color: rgba(255, 166, 0, 0.12);
     padding: 10px 0; text-align: center;
-
+    border: solid orange 2px;
   }
-
 `
+}
 document.head.appendChild(style)
 app.mount('#my-vue-header')

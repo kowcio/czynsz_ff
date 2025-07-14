@@ -45,7 +45,7 @@ export interface Dokument {
   CzyBO?: boolean
   CzyKorekta?: boolean
   CzyDokSym?: boolean
-  Szczegoly?: Record<string, string>
+  Szczegoly?: Record<string, string> //Szczegoly
   SzczegolyWew?: Record<string, string>
   SklejoneDok?: null
   SzczegolyDokZak?: Record<string, string>
