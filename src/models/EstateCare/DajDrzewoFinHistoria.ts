@@ -1,3 +1,5 @@
+import type { Szczegoly } from './DajDokSzczegoly'
+
 export interface HistoriaRachunku {
   McGranicyDok: string
   CzySaDokPoDacieGrDok: boolean
@@ -45,7 +47,7 @@ export interface Dokument {
   CzyBO?: boolean
   CzyKorekta?: boolean
   CzyDokSym?: boolean
-  Szczegoly?: Record<string, string> //Szczegoly
+  Szczegoly?: Szczegoly //Szczegoly
   SzczegolyWew?: Record<string, string>
   SklejoneDok?: null
   SzczegolyDokZak?: Record<string, string>

@@ -1,8 +1,9 @@
+<!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <template>
   <div>Hello VUE 33 plugin</div>
   <!-- Empty template: nothing rendered by Vue -->
   <!-- <button @click="addTopLevelSticker">Add sticker</button> -->
-  <button @click="getTabs">List Tabs</button>
+  <!-- <button @click="getTabs">List Tabs</button> -->
   <button @click="getTheData">Ile hajsu ?!</button>
   <li v-for="wpis in finanse" :key="wpis.RejIdent">
     {{ wpis.McStanu }} - {{ wpis.Opis }} - {{ wpis.DoZaplaty }} -{{ wpis.Obciazenia }} -
@@ -10,9 +11,9 @@
   </li>
   <ul>
     <!-- <li v-for="tab in tabs1" :key="tab.id">{{ tab }} - {{ tab.title }} - {{ tab.url }}</li> -->
-    <li v-for="tab in tabs2" :key="tab.tab.id">
-      {{ tab.creationTime }} - {{ tab.tab.title }} - {{ tab.tab.url }}
-    </li>
+    <!-- <li v-for="tab in tabs2" :key="tab.tab.id"> -->
+    <!-- {{ tab.creationTime }} - {{ tab.tab.title }} - {{ tab.tab.url }} -->
+    <!-- </li> -->
   </ul>
 </template>
 
@@ -21,41 +22,35 @@ import { onMounted } from 'vue'
 import dayjs from 'dayjs'
 import axios from 'axios'
 import { ref } from 'vue'
-import browser from 'webextension-polyfill'
-import type { Tabs } from 'webextension-polyfill'
-import type {
-  Dokument,
-  Finanse,
-  HistoriaRachunku,
-  Pozycje,
-} from './models/EstateCare/DajDrzewoFinHistoria'
-import type { DocumentSzczegoly } from './models/EstateCare/DajDokSzczegoly'
+// import browser from 'webextension-polyfill'
+// import type { Tabs } from 'webextension-polyfill'
+import type { Dokument, Finanse } from './models/EstateCare/DajDrzewoFinHistoria'
 
 onMounted(() => {
   console.log('Component mounted!')
 })
 
-interface TabCreationProperties {
-  tab: Tabs.Tab
-  creationTime: string
-}
+// interface TabCreationProperties {
+//   tab: Tabs.Tab
+//   creationTime: string
+// }
 
-const tabs1 = ref<Tabs.Tab[]>([]) // Explicitly type the ref
-const tabs2 = ref<TabCreationProperties[]>([]) // Explicitly type the ref
+// const tabs1 = ref<Tabs.Tab[]>([]) // Explicitly type the ref
+// const tabs2 = ref<TabCreationProperties[]>([]) // Explicitly type the ref
 
-function getTabs() {
-  browser.tabs.query({ currentWindow: true }).then((tabs) => {
-    tabs1.value = tabs
+// function getTabs() {
+//   browser.tabs.query({ currentWindow: true }).then((tabs) => {
+//     tabs1.value = tabs
 
-    tabs2.value = tabs.map((tab) => ({
-      tab,
-      creationTime: dayjs().format('DDMMYYYY:HH:mm'),
-    })) as TabCreationProperties[]
-  })
-}
-onMounted(() => {
-  // document.body.style.border = '5px solid black'
-})
+//     tabs2.value = tabs.map((tab) => ({
+//       tab,
+//       creationTime: dayjs().format('DDMMYYYY:HH:mm'),
+//     })) as TabCreationProperties[]
+//   })
+// }
+// onMounted(() => {
+//   // document.body.style.border = '5px solid black'
+// })
 
 const kontaFinansowe = ref<string[]>([])
 const finanse = ref<Finanse[]>([])
@@ -63,22 +58,34 @@ const dokumenty = ref<Dokument[]>([])
 
 async function getTheData() {
   const numerRachunku = 113986
+  const numerRachunku2 = 122557
+
   const data_od = '2024-01-01'
   const data_do = dayjs().format('YYYY-MM-DD') //'2025-08-11'
   const url = `https://rozliczenia.estatecare.pl/iokRozr/DajDrzewoFinHistoria?Rozr=${numerRachunku}&DataOd=${data_od}}&DataDo=${data_do}`
 
   const elements = document.querySelectorAll('.app-konto-finansowe')
   elements.forEach((element) => {
-    kontaFinansowe.value.push(element.getAttribute('href') || 'Brak konta finansowego')
-    console.log('Found konto finansowe:', element.getAttribute('href'))
+    const adresDoRachunkuFinansowego = element.getAttribute('href') || ''
+    const regex = /\/content\/InetObsKontr\/finanse\/(\d+)/
+    const match = adresDoRachunkuFinansowego.match(regex)
+    if (match) {
+      kontaFinansowe.value.push(match[1])
+    }
   })
-
+  console.log('Znaleziono konta finansowe:', kontaFinansowe.value.toString())
   // 1. pobranie listy finansów wraz z listą dokumentów gdzie są rozpisane szczegóły co i ile kosztuje
 
   finanse.value = await getHistoriaRachunku(url)
+  console.log('The number of finanse is ', finanse.value)
 
   // 2. Zczytanie wszystkich dokumentów wraz z szczegółami
   dokumenty.value = await getDokumentsWithIdentsToFetchDetails(finanse.value)
+
+  /**
+   * Zrobić 2 mapy gdzie kluczem będzie Ident dokumetu i wtedy bede mogl
+   * pobrać miesiac i do tego odpowiedni dokument.
+   */
 
   console.log('The number of document ids is ', dokumenty.value.length, dokumenty.value)
   // 4. Zapisanie w storze
@@ -94,18 +101,29 @@ async function getTheData() {
     Opis: dokument.Opis,
     Numer: dokument.Numer,
     Kwota: dokument.Kwota,
-    SzczegolyPozycje: dokument.Szczegoly?.Pozycje,
+    SzczegolyPozycje: dokument.Szczegoly?.Pozycje, //to jest puste daczegos
   }))
-
+  console.log('dokumentISzczegoly', dokumentISzczegoly)
   dokumentISzczegoly.forEach((dokument) => {
     console.log(dokument.Opis, dokument.Numer, dokument.Opis, dokument.Kwota)
     dokument.SzczegolyPozycje?.forEach(
       (pozycja: { SkladnikOpl: string; Brutto: number; Netto: number }) => {
         //return for front test in cnsole
-        console.log(pozycja.SkladnikOpl, pozycja.Brutto, pozycja.Netto)
+        console.log('Pozycja kosztów ', pozycja.SkladnikOpl, pozycja.Brutto, pozycja.Netto)
       },
     )
   })
+
+  // 6. Proboa połączenia jednego z drugim uzywajac miesiace
+  const linkedData = finanse.value.reduce((acc: { [key: string]: any }, finans) => {
+    const entry = dokumenty.value.find((entry) => entry.Opis === finans.Opis)
+    if (entry) {
+      acc[finans.Opis] = { ...finans, entry }
+    }
+    return acc
+  }, {})
+  console.log(linkedData)
+  ////////////////////////////////////////////////////////////////////////////////////////
 }
 
 function getDokumentsWithIdentsToFetchDetails(finanse: Finanse[]) {
@@ -132,7 +150,7 @@ function getHistoriaRachunku(url: string): Promise<Finanse[]> {
         Cookie: `POMSessionId=${POMSessionId}; at=${at}`,
       },
     })
-    .then((response) => response.data as Finanse[])
+    .then((response) => response.data.data.Finanse as Finanse[])
 }
 </script>
 
