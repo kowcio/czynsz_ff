@@ -97,7 +97,6 @@ async function getTheData() {
     SzczegolyPozycje: dokument.Szczegoly?.Pozycje,
   }))
 
-  console.log('Pozycje ; ', dokumentISzczegoly[0].SzczegolyPozycje)
   dokumentISzczegoly.forEach((dokument) => {
     console.log(dokument.Opis, dokument.Numer, dokument.Opis, dokument.Kwota)
     dokument.SzczegolyPozycje?.forEach(
@@ -124,24 +123,16 @@ function getDokumentsWithIdentsToFetchDetails(finanse: Finanse[]) {
   })
 }
 
-async function getHistoriaRachunku(url: string): Promise<Finanse[]> {
+function getHistoriaRachunku(url: string): Promise<Finanse[]> {
   const POMSessionId = localStorage.getItem('POMSessionId')
   const at = localStorage.getItem('at')
-  try {
-    const response = await axios.get(url, {
+  return axios
+    .get(url, {
       headers: {
         Cookie: `POMSessionId=${POMSessionId}; at=${at}`,
       },
     })
-
-    const historiaRachunku: HistoriaRachunku = response.data.data
-    return historiaRachunku.Finanse as Finanse[]
-  } catch (error) {
-    console.error(error)
-    return [] as Finanse[]
-  } finally {
-    console.log('getHistoriaRachunku finished')
-  }
+    .then((response) => response.data as Finanse[])
 }
 </script>
 
