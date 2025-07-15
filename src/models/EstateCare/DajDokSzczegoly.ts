@@ -32,7 +32,7 @@ export interface Szczegoly {
   Parowania: Parowanie[]
 }
 
-export interface DocumentPozycje {
+export interface DocumentSzczegoly {
   Ident: string
   DokId: number
   RejId: number
