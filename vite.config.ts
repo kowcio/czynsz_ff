@@ -15,7 +15,7 @@ console.log(packageJson)
 export default defineConfig({
   plugins: [
     vue({
-      include: ['src/**/*.{vue,js,ts}'],
+      include: ['src/**/*.{vue,js}'],
       template: {
         transformAssetUrls,
         compilerOptions: {

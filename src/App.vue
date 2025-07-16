@@ -24,7 +24,8 @@ import axios from 'axios'
 import { ref } from 'vue'
 // import browser from 'webextension-polyfill'
 // import type { Tabs } from 'webextension-polyfill'
-import type { Dokument, Finanse } from './models/EstateCare/DajDrzewoFinHistoria'
+import type { Dokument, Finanse, HistoriaRachunku } from './models/EstateCare/DajDrzewoFinHistoria'
+import { useFinanseStore } from './stores/FinanseStore'
 
 onMounted(() => {
   console.log('Component mounted!')
@@ -52,8 +53,11 @@ onMounted(() => {
 //   // document.body.style.border = '5px solid black'
 // })
 
+const finStore = useFinanseStore()
 const kontaFinansowe = ref<string[]>([])
+const historiaRachunku = ref<HistoriaRachunku>()
 const finanse = ref<Finanse[]>([])
+
 const dokumenty = ref<Dokument[]>([])
 
 async function getTheData() {
@@ -75,12 +79,85 @@ async function getTheData() {
   })
   console.log('Znaleziono konta finansowe:', kontaFinansowe.value.toString())
   // 1. pobranie listy finansów wraz z listą dokumentów gdzie są rozpisane szczegóły co i ile kosztuje
+  let debug_i = 0
+  // finanse.value = await loadHistoriaRachunku(url)
+  for (const numerRachunku of kontaFinansowe.value) {
+    finanse.value = await finStore.loadHistoriaRachunku(numerRachunku)
+    console.log('Loaded finanse for numerRachunku:', numerRachunku, historiaRachunku.value)
+    for (const finans of finanse.value) {
+      if (!finans.Pozycje) {
+        console.log(finans.McStanu, ' Wpis finansowy nie ma pozycji.')
+        // continue
+      }
+      console.log(finans.McStanu, ' McStanu:', finans.McStanu, finans.McStanu)
+      for (const finans_pozycje of finans.Pozycje ?? []) {
+        //zewnetrzene bez dokumentu
+        const dokumentIds = finans_pozycje.Pozycje?.map(
+          (pozycja) =>
+            pozycja.Dokument?.Ident?.concat('-' + pozycja.Dokument?.Opis) ?? 'MissingDoc',
+        ).join(',')
 
-  finanse.value = await getHistoriaRachunku(url)
-  console.log('The number of finanse is ', finanse.value)
+        console.log(
+          'finans_pozycje:',
+          finans_pozycje.Pozycje?.length,
+          dokumentIds,
+          finans_pozycje.Pozycje,
+        )
+
+        //pozycje w pozycja z dokumentem
+        for (const finans_pozycje_pozycje of finans_pozycje.Pozycje ?? []) {
+          console.log('debug_i:', debug_i)
+          if (debug_i++ == 5) return
+          if (!finans_pozycje_pozycje.Dokument) {
+            console.log('Dokument pusty', finans_pozycje_pozycje.Dokument)
+            continue
+          }
+          // if (!finans_pozycje_pozycje.Opis.includes('Wpłata bankowa')) {
+          //   console.log('Dokument wplaty bankowej pomijamy', )
+          //   continue
+          // }
+          // if (!finans_pozycje_pozycje.Opis.includes('Z poprzedniego miesiąca')) {
+          //   console.log('Dokument Z poprzedniego miesiąca pomijamy')
+          //   break
+          // }
+          console.log(
+            'Dokumenty w pozycjach:',
+            finans_pozycje_pozycje.Pozycje?.length,
+            finans_pozycje_pozycje.Pozycje,
+            finans_pozycje_pozycje,
+          )
+
+          const identToGet = finans_pozycje_pozycje.Dokument?.Ident
+          if (identToGet) {
+            await new Promise((resolve) => setTimeout(resolve, 1000))
+            const szczegoly_pozycje = await finStore.loadDokument(identToGet)
+            console.log('Loaded  document ident :', identToGet, szczegoly_pozycje)
+            for (const szczegoly of szczegoly_pozycje?.Szczegoly?.Pozycje ?? []) {
+              console.log(
+                finans.McStanu,
+                szczegoly_pozycje?.Ident,
+                szczegoly_pozycje?.Kwota,
+                szczegoly.SkladnikOpl,
+                szczegoly.Brutto,
+              )
+            }
+            //get documents
+          } else {
+            console.log(
+              'No document ident found for finans_pozycje_pozycje:',
+              finans_pozycje_pozycje,
+            )
+          }
+        }
+      }
+      // const dokSzczegoly = await getDokumentsWithIdentsToFetchDetails(finanse.value)
+    }
+  }
+
+  console.log('The number of finanse is ', historiaRachunku.value)
 
   // 2. Zczytanie wszystkich dokumentów wraz z szczegółami
-  dokumenty.value = await getDokumentsWithIdentsToFetchDetails(finanse.value)
+  // dokumenty.value = await getDokumentsWithIdentsToFetchDetails(historiaRachunku.value)
 
   /**
    * Zrobić 2 mapy gdzie kluczem będzie Ident dokumetu i wtedy bede mogl
@@ -90,8 +167,8 @@ async function getTheData() {
   console.log('The number of document ids is ', dokumenty.value.length, dokumenty.value)
   // 4. Zapisanie w storze
 
-  localStorage.setItem('finanse', JSON.stringify(finanse.value))
-  localStorage.setItem('dokumenty', JSON.stringify(dokumenty.value))
+  // localStorage.setItem('finanse', JSON.stringify(historiaRachunku.value))
+  // localStorage.setItem('dokumenty', JSON.stringify(dokumenty.value))
 
   //5. Przeiterować dokumenty i a nastepnie pogrupować miesiącem / i tym za co jest zapłata
 
@@ -115,14 +192,14 @@ async function getTheData() {
   })
 
   // 6. Proboa połączenia jednego z drugim uzywajac miesiace
-  const linkedData = finanse.value.reduce((acc: { [key: string]: any }, finans) => {
-    const entry = dokumenty.value.find((entry) => entry.Opis === finans.Opis)
-    if (entry) {
-      acc[finans.Opis] = { ...finans, entry }
-    }
-    return acc
-  }, {})
-  console.log(linkedData)
+  // const linkedData = historiaRachunku.value.reduce((acc: { [key: string]: any }, finans) => {
+  //   const entry = dokumenty.value.find((entry) => entry.Opis === finans.Opis)
+  //   if (entry) {
+  //     acc[finans.Opis] = { ...finans, entry }
+  //   }
+  //   return acc
+  // }, {})
+  // console.log(linkedData)
   ////////////////////////////////////////////////////////////////////////////////////////
 }
 
@@ -141,7 +218,7 @@ function getDokumentsWithIdentsToFetchDetails(finanse: Finanse[]) {
   })
 }
 
-function getHistoriaRachunku(url: string): Promise<Finanse[]> {
+function loadHistoriaRachunku(url: string): Promise<Finanse[]> {
   const POMSessionId = localStorage.getItem('POMSessionId')
   const at = localStorage.getItem('at')
   return axios
