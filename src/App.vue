@@ -61,7 +61,7 @@ async function getTheData() {
   const numerRachunku2 = 122557
 
   const data_od = '2024-01-01'
-  const data_do = dayjs().format('YYYY-MM-DD') //'2025-08-11'
+  const data_do = dayjs().format('YYYY-MM-DD') // '2025-08-11'
   const url = `https://rozliczenia.estatecare.pl/iokRozr/DajDrzewoFinHistoria?Rozr=${numerRachunku}&DataOd=${data_od}}&DataDo=${data_do}`
 
   const elements = document.querySelectorAll('.app-konto-finansowe')
