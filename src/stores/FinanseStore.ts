@@ -3,6 +3,7 @@ import type { Finanse, HistoriaRachunku } from '@/models/EstateCare/DajDrzewoFin
 import axios from 'axios'
 import ApiUrlsService from './ApiUrlsService'
 import type { DocumentSzczegoly } from '@/models/EstateCare/DajDokSzczegoly'
+import type { ChartData } from '@/models/Charts'
 
 export interface MyFinanseStoreState {
   kontaFinansowe: string[]
@@ -11,6 +12,7 @@ export interface MyFinanseStoreState {
   dokumenty: DocumentSzczegoly[]
   loading: boolean
   error: unknown
+  chartData: ChartData
 }
 
 export const useFinanseStore = defineStore('myFinanse', {
@@ -22,6 +24,11 @@ export const useFinanseStore = defineStore('myFinanse', {
       dokumenty: [],
       loading: false,
       error: null,
+      chartData: {
+        type: 'line',
+        labels: [],
+        datasets: [],
+      },
     }) as MyFinanseStoreState,
   getters: {
     // getters
@@ -79,6 +86,10 @@ export const useFinanseStore = defineStore('myFinanse', {
       } finally {
         this.loading = false
       }
+    },
+
+    saveChartDate(chartData: ChartData) {
+      this.chartData = chartData
     },
   },
 })
