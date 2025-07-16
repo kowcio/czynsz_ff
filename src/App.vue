@@ -84,69 +84,73 @@ async function getTheData() {
   for (const numerRachunku of kontaFinansowe.value) {
     finanse.value = await finStore.loadHistoriaRachunku(numerRachunku)
     console.log('Loaded finanse for numerRachunku:', numerRachunku, historiaRachunku.value)
-    for (const finans of finanse.value) {
-      if (!finans.Pozycje) {
-        console.log(finans.McStanu, ' Wpis finansowy nie ma pozycji.')
-        // continue
+    for (const finanseZaMiesiac of finanse.value) {
+      if (!finanseZaMiesiac.Pozycje) {
+        console.log('Brak wpisów w miesiącu ', finanseZaMiesiac.McStanu, finanseZaMiesiac.Opis)
+        continue
       }
-      console.log(finans.McStanu, ' McStanu:', finans.McStanu, finans.McStanu)
-      for (const finans_pozycje of finans.Pozycje ?? []) {
-        //zewnetrzene bez dokumentu
+      console.log('Finanse za miesiac', finanseZaMiesiac.McStanu, finanseZaMiesiac.Opis)
+
+      for (const finans_pozycje of finanseZaMiesiac.Pozycje ?? []) {
+        console.log(
+          'Całkowity koszt (suma z dokumentów) : ',
+          finans_pozycje.Opis,
+          finans_pozycje.Obciazenia,
+        )
+
         const dokumentIds = finans_pozycje.Pozycje?.map(
           (pozycja) =>
-            pozycja.Dokument?.Ident?.concat('-' + pozycja.Dokument?.Opis) ?? 'MissingDoc',
-        ).join(',')
+            pozycja.Dokument?.Ident?.concat('-' + pozycja.Dokument?.Opis) ?? 'MissingOpisOrDoc',
+        ).join(', ')
 
         console.log(
-          'finans_pozycje:',
+          'Pozycja z ',
           finans_pozycje.Pozycje?.length,
+          ' dokumentami. ',
           dokumentIds,
           finans_pozycje.Pozycje,
         )
 
-        //pozycje w pozycja z dokumentem
-        for (const finans_pozycje_pozycje of finans_pozycje.Pozycje ?? []) {
-          console.log('debug_i:', debug_i)
-          if (debug_i++ == 5) return
-          if (!finans_pozycje_pozycje.Dokument) {
-            console.log('Dokument pusty', finans_pozycje_pozycje.Dokument)
+        for (const pozycjaZDokumentem of finans_pozycje.Pozycje ?? []) {
+          if (!pozycjaZDokumentem.Dokument) {
+            console.log('Dokument pusty', pozycjaZDokumentem.Dokument)
             continue
           }
-          // if (!finans_pozycje_pozycje.Opis.includes('Wpłata bankowa')) {
-          //   console.log('Dokument wplaty bankowej pomijamy', )
-          //   continue
-          // }
-          // if (!finans_pozycje_pozycje.Opis.includes('Z poprzedniego miesiąca')) {
-          //   console.log('Dokument Z poprzedniego miesiąca pomijamy')
-          //   break
-          // }
-          console.log(
-            'Dokumenty w pozycjach:',
-            finans_pozycje_pozycje.Pozycje?.length,
-            finans_pozycje_pozycje.Pozycje,
-            finans_pozycje_pozycje,
-          )
+          // console.log('pozycjaZDokumentem', pozycjaZDokumentem.Opis)
 
-          const identToGet = finans_pozycje_pozycje.Dokument?.Ident
+          const values = ['Nalicz', 'Naleznosc', 'Naliczenie', 'nalicz', 'korekta']
+          const regex = new RegExp(values.join('|'), 'i')
+          if (!regex.test(pozycjaZDokumentem.Dokument?.Opis ?? '')) {
+            // console.log(
+            //   'Pomijam ',
+            //   pozycjaZDokumentem.Dokument?.Ident,
+            //   pozycjaZDokumentem.Dokument?.Opis,
+            // )
+            continue
+          }
+
+          const identToGet = pozycjaZDokumentem.Dokument?.Ident
           if (identToGet) {
+            console.log('debug_i:', debug_i)
+            if (debug_i++ == 10) return
             await new Promise((resolve) => setTimeout(resolve, 1000))
-            const szczegoly_pozycje = await finStore.loadDokument(identToGet)
-            console.log('Loaded  document ident :', identToGet, szczegoly_pozycje)
-            for (const szczegoly of szczegoly_pozycje?.Szczegoly?.Pozycje ?? []) {
+            const dokumentZListaOplat = await finStore.loadDokument(identToGet)
+            console.log(
+              'Opis dokumentu z opłatami :',
+              dokumentZListaOplat?.Ident,
+              dokumentZListaOplat?.Opis,
+            )
+            for (const szczegoly of dokumentZListaOplat?.Szczegoly?.Pozycje ?? []) {
               console.log(
-                finans.McStanu,
-                szczegoly_pozycje?.Ident,
-                szczegoly_pozycje?.Kwota,
+                finanseZaMiesiac.McStanu,
+                dokumentZListaOplat?.Ident,
+                dokumentZListaOplat?.Kwota,
                 szczegoly.SkladnikOpl,
                 szczegoly.Brutto,
               )
             }
-            //get documents
           } else {
-            console.log(
-              'No document ident found for finans_pozycje_pozycje:',
-              finans_pozycje_pozycje,
-            )
+            console.log('Brak dokumentów', pozycjaZDokumentem)
           }
         }
       }

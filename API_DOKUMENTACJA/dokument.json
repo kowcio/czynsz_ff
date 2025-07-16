@@ -29,7 +29,7 @@
     "Szczegoly": {
       "TypFaktury": "NA",
       "Pozycje": [
-        { 
+        {
           "SkladnikOpl": "Administrowanie",
           "Stawka": "",
           "Cena": 0.69,
