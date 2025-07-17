@@ -4,7 +4,7 @@
   <!-- Empty template: nothing rendered by Vue -->
   <!-- <button @click="addTopLevelSticker">Add sticker</button> -->
   <!-- <button @click="getTabs">List Tabs</button> -->
-  <ChartComposite :chartData="chartData" />
+  <!-- <ChartComposite :chartData="chartData" /> -->
   <button @click="getTheData">Ile hajsu ?!</button>
   <li v-for="wpis in finanse" :key="wpis.RejIdent">
     {{ wpis.McStanu }} - {{ wpis.Opis }} - {{ wpis.DoZaplaty }} -{{ wpis.Obciazenia }} -
@@ -27,7 +27,7 @@ import { ref } from 'vue'
 // import type { Tabs } from 'webextension-polyfill'
 import type { Dokument, Finanse, HistoriaRachunku } from './models/EstateCare/DajDrzewoFinHistoria'
 import { useFinanseStore } from './stores/FinanseStore'
-import ChartComposite from './components/ChartComposite.vue'
+// import ChartComposite from './components/ChartComposite.vue'
 import type { ChartData } from './models/Charts'
 
 onMounted(() => {
@@ -70,7 +70,7 @@ const chartData = ref<ChartData>({
 async function getTheData() {
   const numerRachunku = 113986
   const numerRachunku2 = 122557
-
+  const finStore = useFinanseStore()
   const data_od = '2024-01-01'
   const data_do = dayjs().format('YYYY-MM-DD') // '2025-08-11'
   const url = `https://rozliczenia.estatecare.pl/iokRozr/DajDrzewoFinHistoria?Rozr=${numerRachunku}&DataOd=${data_od}}&DataDo=${data_do}`
@@ -170,8 +170,7 @@ async function getTheData() {
     }
   }
 
-  const finStore = useFinanseStore()
-  finStore.saveChartDate(chartData.value)
+  // finStore.saveChartDate(chartData.value)
 
   // console.log('The number of finanse is ', historiaRachunku.value)
 
