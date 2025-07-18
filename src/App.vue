@@ -4,7 +4,8 @@
   <!-- Empty template: nothing rendered by Vue -->
   <!-- <button @click="addTopLevelSticker">Add sticker</button> -->
   <!-- <button @click="getTabs">List Tabs</button> -->
-  <!-- <ChartComposite :chartData="chartData" /> -->
+  Chart
+  <ChartComposite :chartData="chartData" class="chart_container" />
   <button @click="getTheData">Ile hajsu ?!</button>
   <li v-for="wpis in finanse" :key="wpis.RejIdent">
     {{ wpis.McStanu }} - {{ wpis.Opis }} - {{ wpis.DoZaplaty }} -{{ wpis.Obciazenia }} -
@@ -21,13 +22,12 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import dayjs from 'dayjs'
-import axios from 'axios'
 import { ref } from 'vue'
 // import browser from 'webextension-polyfill'
 // import type { Tabs } from 'webextension-polyfill'
 import type { Dokument, Finanse, HistoriaRachunku } from './models/EstateCare/DajDrzewoFinHistoria'
 import { useFinanseStore } from './stores/FinanseStore'
-// import ChartComposite from './components/ChartComposite.vue'
+import ChartComposite from './components/ChartComposite.vue'
 import type { ChartData } from './models/Charts'
 
 onMounted(() => {
@@ -65,7 +65,29 @@ const dokumenty = ref<Dokument[]>([])
 const chartData = ref<ChartData>({
   type: 'bar',
   labels: [],
-  datasets: [],
+  datasets: [
+    {
+      label: 'Miesieczne obciazenia',
+      backgroundColor: '#f87979',
+      data: [],
+      borderWidth: 1,
+      borderColor: '#f87979',
+    },
+  ],
+})
+
+const chartDataTemp = ref<ChartData>({
+  type: 'bar',
+  labels: [],
+  datasets: [
+    {
+      label: 'Miesieczne obciazenia',
+      backgroundColor: '#f87979',
+      data: [],
+      borderWidth: 1,
+      borderColor: '#f87979',
+    },
+  ],
 })
 async function getTheData() {
   const numerRachunku = 113986
@@ -88,7 +110,8 @@ async function getTheData() {
   // 1. pobranie listy finansów wraz z listą dokumentów gdzie są rozpisane szczegóły co i ile kosztuje
   let debug_i = 0
   // finanse.value = await loadHistoriaRachunku(url)
-  for (const numerRachunku of kontaFinansowe.value) {
+
+  outerloop: for (const numerRachunku of kontaFinansowe.value) {
     finanse.value = await finStore.loadHistoriaRachunku(numerRachunku)
     console.log('Loaded finanse for numerRachunku:', numerRachunku)
     for (const finanseZaMiesiac of finanse.value) {
@@ -101,14 +124,15 @@ async function getTheData() {
       for (const finans_pozycje of finanseZaMiesiac.Pozycje ?? []) {
         console.log(
           'Całkowity koszt (suma z dokumentów) : ',
-          finans_pozycje.McStanu,
+          finanseZaMiesiac.McStanu,
           finans_pozycje.Opis,
           finans_pozycje.Obciazenia,
         )
 
-        // chartData.value.labels.push(dayjs(finanseZaMiesiac.McStanu).format('YYYY-MM-DD'))
-        // chartData.value.datasets[0].label = 'Miesieczne obciazenia'
-        // chartData.value.datasets[0].data.push(finans_pozycje.Obciazenia)
+        // chartDataTemp.value.datasets = chartData.value.datasets || [{ label: 'Miesieczne obciazenia', data: [] }]
+        chartDataTemp.value.labels.push(dayjs(finanseZaMiesiac.McStanu).format('YYYY-MM-DD'))
+        chartDataTemp.value.datasets[0].data.push(finans_pozycje.Obciazenia)
+        // this.$refs.chart.update()
 
         const dokumentIds = finans_pozycje.Pozycje?.map(
           (pozycja) =>
@@ -144,7 +168,7 @@ async function getTheData() {
           const identToGet = pozycjaZDokumentem.Dokument?.Ident
           if (identToGet) {
             console.log('debug_i:', debug_i)
-            if (debug_i++ == 5) return
+            if (debug_i++ == 5) break outerloop //return
             await new Promise((resolve) => setTimeout(resolve, 1000))
             const dokumentZListaOplat = await finStore.loadDokument(identToGet)
             console.log(
@@ -170,7 +194,9 @@ async function getTheData() {
     }
   }
 
-  // finStore.saveChartDate(chartData.value)
+  finStore.saveChartDate(chartDataTemp.value)
+  chartData.value = chartDataTemp.value
+  console.log('Chart data', chartData.value)
 
   // console.log('The number of finanse is ', historiaRachunku.value)
 
@@ -251,4 +277,8 @@ async function getTheData() {
 
 <style>
 /* Your styles here */
+.chart-container {
+  width: 600px;
+  height: 200px;
+}
 </style>
