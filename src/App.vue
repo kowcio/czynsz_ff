@@ -4,8 +4,7 @@
   <!-- Empty template: nothing rendered by Vue -->
   <!-- <button @click="addTopLevelSticker">Add sticker</button> -->
   <!-- <button @click="getTabs">List Tabs</button> -->
-  Chart
-  <ChartComposite :chartData="chartData" class="chart_container" />
+  <ChartComposite :chartData="chartData" />
   <button @click="getTheData">Ile hajsu ?!</button>
   <li v-for="wpis in finanse" :key="wpis.RejIdent">
     {{ wpis.McStanu }} - {{ wpis.Opis }} - {{ wpis.DoZaplaty }} -{{ wpis.Obciazenia }} -
@@ -27,7 +26,7 @@ import { ref } from 'vue'
 // import type { Tabs } from 'webextension-polyfill'
 import type { Dokument, Finanse, HistoriaRachunku } from './models/EstateCare/DajDrzewoFinHistoria'
 import { useFinanseStore } from './stores/FinanseStore'
-import ChartComposite from './components/ChartComposite.vue'
+// import ChartComposite from './components/ChartComposite.vue'
 import type { ChartData } from './models/Charts'
 
 onMounted(() => {
@@ -194,9 +193,8 @@ async function getTheData() {
     }
   }
 
-  finStore.saveChartDate(chartDataTemp.value)
-  chartData.value = chartDataTemp.value
-  console.log('Chart data', chartData.value)
+  const finStore = useFinanseStore()
+  finStore.saveChartDate(chartData.value)
 
   // console.log('The number of finanse is ', historiaRachunku.value)
 
