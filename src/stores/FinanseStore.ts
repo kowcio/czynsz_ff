@@ -91,5 +91,9 @@ export const useFinanseStore = defineStore('myFinanse', {
     saveChartDate(chartData: ChartData) {
       this.chartData = chartData
     },
+    openStronaZFinansami() {
+      const link = 'https://rozliczenia.estatecare.pl/content/InetObsKontr/finanse'
+      this.$router.push({ path: link })
+    },
   },
 })

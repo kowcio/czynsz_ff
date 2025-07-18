@@ -5,7 +5,9 @@
   <!-- <button @click="addTopLevelSticker">Add sticker</button> -->
   <!-- <button @click="getTabs">List Tabs</button> -->
   Chart
-  <ChartComposite :chartData="chartData" class="chart_container" />
+  <ChartComposite :chartData="chartData" class="chart-container" />
+  <ChartComposite :chartData="chartData2" class="chart-container" />
+
   <button @click="getTheData">Ile hajsu ?!</button>
   <li v-for="wpis in finanse" :key="wpis.RejIdent">
     {{ wpis.McStanu }} - {{ wpis.Opis }} - {{ wpis.DoZaplaty }} -{{ wpis.Obciazenia }} -
@@ -27,7 +29,7 @@ import { ref } from 'vue'
 // import type { Tabs } from 'webextension-polyfill'
 import type { Dokument, Finanse, HistoriaRachunku } from './models/EstateCare/DajDrzewoFinHistoria'
 import { useFinanseStore } from './stores/FinanseStore'
-import ChartComposite from './components/ChartComposite.vue'
+import ChartComposite from './components/charts/Miesiecznie.vue'
 import type { ChartData } from './models/Charts'
 
 onMounted(() => {
@@ -89,10 +91,22 @@ const chartDataTemp = ref<ChartData>({
     },
   ],
 })
+const chartData2 = ref<ChartData>({
+  type: 'bar',
+  labels: [],
+  datasets: [
+    {
+      label: 'Miesieczne obciazenia',
+      backgroundColor: '#f87979',
+      data: [],
+      borderWidth: 1,
+      borderColor: '#f87979',
+    },
+  ],
+})
 async function getTheData() {
   const numerRachunku = 113986
   const numerRachunku2 = 122557
-  const finStore = useFinanseStore()
   const finStore = useFinanseStore()
   const data_od = '2024-01-01'
   const data_do = dayjs().format('YYYY-MM-DD') // '2025-08-11'
@@ -177,6 +191,7 @@ async function getTheData() {
               dokumentZListaOplat?.Ident,
               dokumentZListaOplat?.Opis,
             )
+            //NAJWAZNIEJSZE !!
             for (const szczegoly of dokumentZListaOplat?.Szczegoly?.Pozycje ?? []) {
               console.log(
                 finanseZaMiesiac.McStanu,
@@ -185,101 +200,47 @@ async function getTheData() {
                 szczegoly.SkladnikOpl,
                 szczegoly.Brutto,
               )
+
+              chartData.value.datasets = [
+                {
+                  label: 'Skladnik Opl',
+                  backgroundColor: '#f87979',
+                  borderWidth: 1,
+                  borderColor: '#f87979',
+                  data: szczegoly.SkladnikOpl,
+                },
+                {
+                  label: 'Brutto',
+                  backgroundColor: '#f87979',
+                  borderWidth: 1,
+                  borderColor: '#f87979',
+                  data: szczegoly.Brutto,
+                },
+              ]
+
+              // label: 'Miesieczne obciazenia',
+              // backgroundColor: '#f87979',
+              // data: [],
+              // borderWidth: 1,
+              // borderColor: '#f87979',
             }
           } else {
             console.log('Brak dokumentów', pozycjaZDokumentem)
           }
         }
       }
-      // const dokSzczegoly = await getDokumentsWithIdentsToFetchDetails(finanse.value)
     }
   }
 
   finStore.saveChartDate(chartDataTemp.value)
   chartData.value = chartDataTemp.value
   console.log('Chart data', chartData.value)
-
-  // console.log('The number of finanse is ', historiaRachunku.value)
-
-  // 2. Zczytanie wszystkich dokumentów wraz z szczegółami
-  // dokumenty.value = await getDokumentsWithIdentsToFetchDetails(historiaRachunku.value)
-
-  /**
-   * Zrobić 2 mapy gdzie kluczem będzie Ident dokumetu i wtedy bede mogl
-   * pobrać miesiac i do tego odpowiedni dokument.
-   */
-
-  // console.log('The number of document ids is ', dokumenty.value.length, dokumenty.value)
-  // 4. Zapisanie w storze
-
-  // localStorage.setItem('finanse', JSON.stringify(historiaRachunku.value))
-  // localStorage.setItem('dokumenty', JSON.stringify(dokumenty.value))
-
-  //5. Przeiterować dokumenty i a nastepnie pogrupować miesiącem / i tym za co jest zapłata
-
-  //  Szczegoly?: Record<string, string>
-  // const dokumentISzczegoly = dokumenty.value.map((dokument) => ({
-  //   Ident: dokument.Ident,
-  //   Opis: dokument.Opis,
-  //   Numer: dokument.Numer,
-  //   Kwota: dokument.Kwota,
-  //   SzczegolyPozycje: dokument.Szczegoly?.Pozycje, //to jest puste daczegos
-  // }))
-  // console.log('dokumentISzczegoly', dokumentISzczegoly)
-  // dokumentISzczegoly.forEach((dokument) => {
-  //   console.log(dokument.Opis, dokument.Numer, dokument.Opis, dokument.Kwota)
-  //   dokument.SzczegolyPozycje?.forEach(
-  //     (pozycja: { SkladnikOpl: string; Brutto: number; Netto: number }) => {
-  //       //return for front test in cnsole
-  //       console.log('Pozycja kosztów ', pozycja.SkladnikOpl, pozycja.Brutto, pozycja.Netto)
-  //     },
-  //   )
-  // })
-
-  // 6. Proboa połączenia jednego z drugim uzywajac miesiace
-  // const linkedData = historiaRachunku.value.reduce((acc: { [key: string]: any }, finans) => {
-  //   const entry = dokumenty.value.find((entry) => entry.Opis === finans.Opis)
-  //   if (entry) {
-  //     acc[finans.Opis] = { ...finans, entry }
-  //   }
-  //   return acc
-  // }, {})
-  // console.log(linkedData)
-  ////////////////////////////////////////////////////////////////////////////////////////
 }
-
-// function getDokumentsWithIdentsToFetchDetails(finanse: Finanse[]) {
-//   return finanse.flatMap((finans) => {
-//     // Use empty array if Pozycje is null or undefined
-//     const pozycje = finans.Pozycje ?? []
-//     return pozycje.flatMap((pozycja) => {
-//       console.log('pozycja.McStanu', pozycja.McStanu)
-//       const wewnetrzenePozycjeZDokumentem = pozycja.Pozycje ?? []
-//       return wewnetrzenePozycjeZDokumentem
-//         .map((pozycjaZDokumentem) => pozycjaZDokumentem.Dokument)
-//         .filter((dokument) => !!dokument && Object.keys(dokument).length > 0)
-//         .map((dokument) => dokument as Dokument)
-//     })
-//   })
-// }
-
-// function loadHistoriaRachunku(url: string): Promise<Finanse[]> {
-//   const POMSessionId = localStorage.getItem('POMSessionId')
-//   const at = localStorage.getItem('at')
-//   return axios
-//     .get(url, {
-//       headers: {
-//         Cookie: `POMSessionId=${POMSessionId}; at=${at}`,
-//       },
-//     })
-//     .then((response) => response.data.data.Finanse as Finanse[])
-// }
 </script>
 
 <style>
 /* Your styles here */
 .chart-container {
-  width: 600px;
-  height: 200px;
+  width: 250px;
 }
 </style>
