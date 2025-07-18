@@ -27,7 +27,7 @@ import { ref } from 'vue'
 // import type { Tabs } from 'webextension-polyfill'
 import type { Dokument, Finanse, HistoriaRachunku } from './models/EstateCare/DajDrzewoFinHistoria'
 import { useFinanseStore } from './stores/FinanseStore'
-// import ChartComposite from './components/ChartComposite.vue'
+import ChartComposite from './components/ChartComposite.vue'
 import type { ChartData } from './models/Charts'
 
 onMounted(() => {
@@ -92,6 +92,7 @@ const chartDataTemp = ref<ChartData>({
 async function getTheData() {
   const numerRachunku = 113986
   const numerRachunku2 = 122557
+  const finStore = useFinanseStore()
   const finStore = useFinanseStore()
   const data_od = '2024-01-01'
   const data_do = dayjs().format('YYYY-MM-DD') // '2025-08-11'
@@ -194,8 +195,9 @@ async function getTheData() {
     }
   }
 
-  const finStore = useFinanseStore()
-  finStore.saveChartDate(chartData.value)
+  finStore.saveChartDate(chartDataTemp.value)
+  chartData.value = chartDataTemp.value
+  console.log('Chart data', chartData.value)
 
   // console.log('The number of finanse is ', historiaRachunku.value)
 
