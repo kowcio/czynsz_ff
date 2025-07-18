@@ -4,7 +4,8 @@
   <!-- Empty template: nothing rendered by Vue -->
   <!-- <button @click="addTopLevelSticker">Add sticker</button> -->
   <!-- <button @click="getTabs">List Tabs</button> -->
-  <ChartComposite :chartData="chartData" />
+  Chart
+  <ChartComposite :chartData="chartData" class="chart_container" />
   <button @click="getTheData">Ile hajsu ?!</button>
   <li v-for="wpis in finanse" :key="wpis.RejIdent">
     {{ wpis.McStanu }} - {{ wpis.Opis }} - {{ wpis.DoZaplaty }} -{{ wpis.Obciazenia }} -
