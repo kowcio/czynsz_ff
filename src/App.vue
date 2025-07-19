@@ -5,9 +5,10 @@
   <!-- <button @click="addTopLevelSticker">Add sticker</button> -->
   <!-- <button @click="getTabs">List Tabs</button> -->
   Chart
-  <ChartComposite :chartData="chartData" class="chart-container" />
-  <ChartComposite :chartData="chartData2" class="chart-container" />
-
+  <div class="charts-row">
+    <ChartComposite :chartData="chartData" class="chart-container" />
+    <ChartComposite :chartData="chartData2" class="chart-container" />
+  </div>
   <button @click="getTheData">Ile hajsu ?!</button>
   <li v-for="wpis in finanse" :key="wpis.RejIdent">
     {{ wpis.McStanu }} - {{ wpis.Opis }} - {{ wpis.DoZaplaty }} -{{ wpis.Obciazenia }} -
@@ -93,14 +94,21 @@ const chartDataTemp = ref<ChartData>({
 })
 const chartData2 = ref<ChartData>({
   type: 'bar',
-  labels: [],
+  labels: [], // <-- start with an empty array!
   datasets: [
     {
-      label: 'Miesieczne obciazenia',
+      label: 'Opis składnika opłaty',
       backgroundColor: '#f87979',
       data: [],
       borderWidth: 1,
       borderColor: '#f87979',
+    },
+    {
+      label: 'Kwota dokumentu',
+      backgroundColor: '#79f8f8',
+      data: [],
+      borderWidth: 1,
+      borderColor: '#79f8f8',
     },
   ],
 })
@@ -125,6 +133,10 @@ async function getTheData() {
   // 1. pobranie listy finansów wraz z listą dokumentów gdzie są rozpisane szczegóły co i ile kosztuje
   let debug_i = 0
   // finanse.value = await loadHistoriaRachunku(url)
+
+  // Temporary maps for aggregation
+  const labelToBrutto: Record<string, number> = {}
+  const labelToKwota: Record<string, number> = {}
 
   outerloop: for (const numerRachunku of kontaFinansowe.value) {
     finanse.value = await finStore.loadHistoriaRachunku(numerRachunku)
@@ -201,28 +213,13 @@ async function getTheData() {
                 szczegoly.Brutto,
               )
 
-              chartData.value.datasets = [
-                {
-                  label: 'Skladnik Opl',
-                  backgroundColor: '#f87979',
-                  borderWidth: 1,
-                  borderColor: '#f87979',
-                  data: szczegoly.SkladnikOpl,
-                },
-                {
-                  label: 'Brutto',
-                  backgroundColor: '#f87979',
-                  borderWidth: 1,
-                  borderColor: '#f87979',
-                  data: szczegoly.Brutto,
-                },
-              ]
+              //  chartDataTemp.value.labels.push(dayjs(finanseZaMiesiac.McStanu).format('YYYY-MM-DD'))
+              // chartDataTemp.value.datasets[0].data.push(finans_pozycje.Obciazenia)
 
-              // label: 'Miesieczne obciazenia',
-              // backgroundColor: '#f87979',
-              // data: [],
-              // borderWidth: 1,
-              // borderColor: '#f87979',
+              const label = szczegoly.SkladnikOpl
+              // Aggregate Brutto and Kwota (sum Brutto, last Kwota)
+              labelToBrutto[label] = (labelToBrutto[label] || 0) + szczegoly.Brutto
+              labelToKwota[label] = dokumentZListaOplat?.Kwota || 0
             }
           } else {
             console.log('Brak dokumentów', pozycjaZDokumentem)
@@ -230,6 +227,22 @@ async function getTheData() {
         }
       }
     }
+  }
+
+  // Assign aggregated data to chartData2
+  chartData2.value = {
+    ...chartData2.value,
+    labels: Object.keys(labelToBrutto),
+    datasets: [
+      {
+        ...chartData2.value.datasets[0],
+        data: Object.keys(labelToBrutto).map(label => labelToBrutto[label]),
+      },
+      {
+        ...chartData2.value.datasets[1],
+        data: Object.keys(labelToBrutto).map(label => labelToKwota[label]),
+      },
+    ],
   }
 
   finStore.saveChartDate(chartDataTemp.value)
@@ -240,7 +253,16 @@ async function getTheData() {
 
 <style>
 /* Your styles here */
+.charts-row {
+  display: flex;
+  flex-direction: row;
+  gap: 24px;
+  align-items: flex-start;
+}
 .chart-container {
-  width: 250px;
+  max-width: 500px;
+  max-height: 700px;
+  /* Optionally add: */
+  flex: 1 1 0;
 }
 </style>

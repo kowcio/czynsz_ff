@@ -93,7 +93,7 @@ export const useFinanseStore = defineStore('myFinanse', {
     },
     openStronaZFinansami() {
       const link = 'https://rozliczenia.estatecare.pl/content/InetObsKontr/finanse'
-      this.$router.push({ path: link })
+      // this.$router.push({ path: link })
     },
   },
 })
