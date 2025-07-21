@@ -31,7 +31,7 @@ const style = document.createElement('style')
 if (window.location.href.includes('rozliczenia.estatecare.pl')) {
   style.textContent = `
   #my-vue-header {
-    top: 2%; left: 2%; width: 96%; height:5%;
+    top: 2%; left: 2%; width: 96%; min-height:10%;
     margin: 2%;
     z-index: 9999;
     padding: 10px 0; text-align: center;

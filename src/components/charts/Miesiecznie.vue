@@ -21,12 +21,14 @@ import {
 const props = withDefaults(
   defineProps<{
     title?: string
+    width?: string
     chartData?: ChartData<'bar', number[], string>
   }>(),
   {
     title: '',
+    width: '1200px',
     chartData: () => ({
-      type: 'bar',
+      type: 'line',
       labels: [],
       datasets: [],
     }),
@@ -37,6 +39,12 @@ ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
 const chartOptions = {
   responsive: true,
+  maintainAspectRatio: false,
+  elements: {
+    line: {
+      borderWidth: 1,
+    },
+  },
   title: {
     display: true,
     text: 'Chart Title',
@@ -51,4 +59,8 @@ const chartOptions = {
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+.chart-width {
+  width: var(--width);
+}
+</style>

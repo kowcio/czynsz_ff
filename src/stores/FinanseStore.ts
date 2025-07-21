@@ -1,9 +1,9 @@
 import { defineStore } from 'pinia'
 import type { Finanse, HistoriaRachunku } from '@/models/EstateCare/DajDrzewoFinHistoria.ts'
-import axios from 'axios'
 import ApiUrlsService from './ApiUrlsService'
 import type { DocumentSzczegoly } from '@/models/EstateCare/DajDokSzczegoly'
 import type { ChartData } from '@/models/Charts'
+import axios from 'axios'
 
 export interface MyFinanseStoreState {
   kontaFinansowe: string[]

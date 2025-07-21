@@ -10,16 +10,16 @@
     <ChartComposite :chartData="chartData2" class="chart-container" />
   </div>
   <button @click="getTheData">Ile hajsu ?!</button>
-  <li v-for="wpis in finanse" :key="wpis.RejIdent">
+  <!-- <li v-for="wpis in finanse" :key="wpis.RejIdent">
     {{ wpis.McStanu }} - {{ wpis.Opis }} - {{ wpis.DoZaplaty }} -{{ wpis.Obciazenia }} -
     {{ wpis.Uznania }}
   </li>
   <ul>
-    <!-- <li v-for="tab in tabs1" :key="tab.id">{{ tab }} - {{ tab.title }} - {{ tab.url }}</li> -->
-    <!-- <li v-for="tab in tabs2" :key="tab.tab.id"> -->
-    <!-- {{ tab.creationTime }} - {{ tab.tab.title }} - {{ tab.tab.url }} -->
-    <!-- </li> -->
-  </ul>
+    <li v-for="tab in tabs1" :key="tab.id">{{ tab }} - {{ tab.title }} - {{ tab.url }}</li> -->
+  <!-- <li v-for="tab in tabs2" :key="tab.tab.id"> -->
+  <!-- {{ tab.creationTime }} - {{ tab.tab.title }} - {{ tab.tab.url }} -->
+  <!-- </li> -->
+  <!-- </ul> -->
 </template>
 
 <script setup lang="ts">
@@ -31,7 +31,7 @@ import { ref } from 'vue'
 import type { Dokument, Finanse, HistoriaRachunku } from './models/EstateCare/DajDrzewoFinHistoria'
 import { useFinanseStore } from './stores/FinanseStore'
 import ChartComposite from './components/charts/Miesiecznie.vue'
-import type { ChartData } from './models/Charts'
+import type { ChartData, Dataset } from './models/Charts'
 
 onMounted(() => {
   console.log('Component mounted!')
@@ -80,7 +80,7 @@ const chartData = ref<ChartData>({
 })
 
 const chartDataTemp = ref<ChartData>({
-  type: 'bar',
+  type: 'line',
   labels: [],
   datasets: [
     {
@@ -93,25 +93,14 @@ const chartDataTemp = ref<ChartData>({
   ],
 })
 const chartData2 = ref<ChartData>({
-  type: 'bar',
-  labels: [], // <-- start with an empty array!
-  datasets: [
-    {
-      label: 'Opis składnika opłaty',
-      backgroundColor: '#f87979',
-      data: [],
-      borderWidth: 1,
-      borderColor: '#f87979',
-    },
-    {
-      label: 'Kwota dokumentu',
-      backgroundColor: '#79f8f8',
-      data: [],
-      borderWidth: 1,
-      borderColor: '#79f8f8',
-    },
-  ],
+  type: 'line',
+  labels: [], //daty
+  datasets: [], //label + data - dane
 })
+
+const data_x_chart: string[] = []
+const data_y_datasets_label_data = new Map<string, number[]>()
+
 async function getTheData() {
   const numerRachunku = 113986
   const numerRachunku2 = 122557
@@ -130,13 +119,7 @@ async function getTheData() {
     }
   })
   console.log('Znaleziono konta finansowe:', kontaFinansowe.value.toString())
-  // 1. pobranie listy finansów wraz z listą dokumentów gdzie są rozpisane szczegóły co i ile kosztuje
   let debug_i = 0
-  // finanse.value = await loadHistoriaRachunku(url)
-
-  // Temporary maps for aggregation
-  const labelToBrutto: Record<string, number> = {}
-  const labelToKwota: Record<string, number> = {}
 
   outerloop: for (const numerRachunku of kontaFinansowe.value) {
     finanse.value = await finStore.loadHistoriaRachunku(numerRachunku)
@@ -155,11 +138,10 @@ async function getTheData() {
           finans_pozycje.Opis,
           finans_pozycje.Obciazenia,
         )
-
-        // chartDataTemp.value.datasets = chartData.value.datasets || [{ label: 'Miesieczne obciazenia', data: [] }]
+        //CHARTS
         chartDataTemp.value.labels.push(dayjs(finanseZaMiesiac.McStanu).format('YYYY-MM-DD'))
         chartDataTemp.value.datasets[0].data.push(finans_pozycje.Obciazenia)
-        // this.$refs.chart.update()
+        data_x_chart.push(dayjs(finanseZaMiesiac.McStanu).format('YYYY-MM-DD'))
 
         const dokumentIds = finans_pozycje.Pozycje?.map(
           (pozycja) =>
@@ -206,20 +188,19 @@ async function getTheData() {
             //NAJWAZNIEJSZE !!
             for (const szczegoly of dokumentZListaOplat?.Szczegoly?.Pozycje ?? []) {
               console.log(
-                finanseZaMiesiac.McStanu,
-                dokumentZListaOplat?.Ident,
-                dokumentZListaOplat?.Kwota,
-                szczegoly.SkladnikOpl,
-                szczegoly.Brutto,
+                'miesiac;' + dayjs(finanseZaMiesiac.McStanu).format('YYYY-MM-DD'),
+                ';dokumentIdent;' + dokumentZListaOplat?.Ident,
+                ';sumaOplatZaMiesiac;' + dokumentZListaOplat?.Kwota,
+                ';oplata' + szczegoly.SkladnikOpl,
+                ';kwotaBrutto;' + szczegoly.Brutto,
               )
 
               //  chartDataTemp.value.labels.push(dayjs(finanseZaMiesiac.McStanu).format('YYYY-MM-DD'))
               // chartDataTemp.value.datasets[0].data.push(finans_pozycje.Obciazenia)
-
               const label = szczegoly.SkladnikOpl
-              // Aggregate Brutto and Kwota (sum Brutto, last Kwota)
-              labelToBrutto[label] = (labelToBrutto[label] || 0) + szczegoly.Brutto
-              labelToKwota[label] = dokumentZListaOplat?.Kwota || 0
+              const values = data_y_datasets_label_data.get(label) || []
+              values.push(szczegoly.Brutto)
+              data_y_datasets_label_data.set(label, values)
             }
           } else {
             console.log('Brak dokumentów', pozycjaZDokumentem)
@@ -230,24 +211,32 @@ async function getTheData() {
   }
 
   // Assign aggregated data to chartData2
+  console.log('data_x_chart', data_x_chart)
+  console.log('data_y_datasets_label_data', data_y_datasets_label_data)
+
   chartData2.value = {
     ...chartData2.value,
-    labels: Object.keys(labelToBrutto),
-    datasets: [
-      {
-        ...chartData2.value.datasets[0],
-        data: Object.keys(labelToBrutto).map(label => labelToBrutto[label]),
-      },
-      {
-        ...chartData2.value.datasets[1],
-        data: Object.keys(labelToBrutto).map(label => labelToKwota[label]),
-      },
-    ],
+    labels: data_x_chart,
+    datasets: Array.from(data_y_datasets_label_data.entries()).map(([key, value]) => ({
+      label: key,
+      data: value,
+      normalized: true,
+      backgroundColor: getRandomColor(),
+    })),
   }
 
   finStore.saveChartDate(chartDataTemp.value)
   chartData.value = chartDataTemp.value
   console.log('Chart data', chartData.value)
+}
+
+function getRandomColor() {
+  const letters = '0123456789ABCDEF'
+  let color = '#'
+  for (let i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)]
+  }
+  return color
 }
 </script>
 
@@ -260,9 +249,7 @@ async function getTheData() {
   align-items: flex-start;
 }
 .chart-container {
-  max-width: 500px;
-  max-height: 700px;
-  /* Optionally add: */
-  flex: 1 1 0;
+  width: 2000px;
+  height: 2000px;
 }
 </style>
