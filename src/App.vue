@@ -31,7 +31,8 @@ import { ref } from 'vue'
 import type { Dokument, Finanse, HistoriaRachunku } from './models/EstateCare/DajDrzewoFinHistoria'
 import { useFinanseStore } from './stores/FinanseStore'
 import ChartComposite from './components/charts/Miesiecznie.vue'
-import type { ChartData, Dataset } from './models/Charts'
+import type { ChartData } from './models/Charts'
+import type { DocumentSzczegoly, Pozycja } from './models/EstateCare/DajDokSzczegoly'
 
 onMounted(() => {
   console.log('Component mounted!')
@@ -109,59 +110,49 @@ async function getTheData() {
   const data_do = dayjs().format('YYYY-MM-DD') // '2025-08-11'
   const url = `https://rozliczenia.estatecare.pl/iokRozr/DajDrzewoFinHistoria?Rozr=${numerRachunku}&DataOd=${data_od}}&DataDo=${data_do}`
 
-  const elements = document.querySelectorAll('.app-konto-finansowe')
-  elements.forEach((element) => {
-    const adresDoRachunkuFinansowego = element.getAttribute('href') || ''
-    const regex = /\/content\/InetObsKontr\/finanse\/(\d+)/
-    const match = adresDoRachunkuFinansowego.match(regex)
-    if (match) {
-      kontaFinansowe.value.push(match[1])
-    }
-  })
-  console.log('Znaleziono konta finansowe:', kontaFinansowe.value.toString())
   let debug_i = 0
+  kontaFinansowe.value = await finStore.loadKontaFinansowe()
 
   outerloop: for (const numerRachunku of kontaFinansowe.value) {
     finanse.value = await finStore.loadHistoriaRachunku(numerRachunku)
-    console.log('Loaded finanse for numerRachunku:', numerRachunku)
+    // console.log('Loaded finanse for numerRachunku:', numerRachunku)
     for (const finanseZaMiesiac of finanse.value) {
       if (!finanseZaMiesiac.Pozycje) {
-        console.log('Brak wpisów w miesiącu ', finanseZaMiesiac.McStanu, finanseZaMiesiac.Opis)
+        // console.log('Brak wpisów w miesiącu ', finanseZaMiesiac.McStanu, finanseZaMiesiac.Opis)
         continue
       }
-      console.log('Finanse za miesiac', finanseZaMiesiac.McStanu, finanseZaMiesiac.Opis)
+      // console.log('Finanse za miesiac', finanseZaMiesiac.McStanu, finanseZaMiesiac.Opis)
 
       for (const finans_pozycje of finanseZaMiesiac.Pozycje ?? []) {
-        console.log(
-          'Całkowity koszt (suma z dokumentów) : ',
-          finanseZaMiesiac.McStanu,
-          finans_pozycje.Opis,
-          finans_pozycje.Obciazenia,
-        )
+        // console.log(
+        //   'Całkowity koszt (suma z dokumentów) : ',
+        //   finanseZaMiesiac.McStanu,
+        //   finans_pozycje.Opis,
+        //   finans_pozycje.Obciazenia,
+        // )
         //CHARTS
         chartDataTemp.value.labels.push(dayjs(finanseZaMiesiac.McStanu).format('YYYY-MM-DD'))
         chartDataTemp.value.datasets[0].data.push(finans_pozycje.Obciazenia)
         data_x_chart.push(dayjs(finanseZaMiesiac.McStanu).format('YYYY-MM-DD'))
 
-        const dokumentIds = finans_pozycje.Pozycje?.map(
-          (pozycja) =>
-            pozycja.Dokument?.Ident?.concat('-' + pozycja.Dokument?.Opis) ?? 'Brak opisu',
-        ).join(', ')
+        // const dokumentIds = finans_pozycje.Pozycje?.map(
+        //   (pozycja) =>
+        //     pozycja.Dokument?.Ident?.concat('-' + pozycja.Dokument?.Opis) ?? 'Brak opisu',
+        // ).join(', ')
 
-        console.log(
-          'Pozycja z ',
-          finans_pozycje.Pozycje?.length,
-          ' dokumentami. ',
-          dokumentIds,
-          finans_pozycje.Pozycje,
-        )
+        // console.log(
+        //   'Pozycja z ',
+        //   finans_pozycje.Pozycje?.length,
+        //   ' dokumentami. ',
+        //   dokumentIds,
+        //   finans_pozycje.Pozycje,
+        // )
 
         for (const pozycjaZDokumentem of finans_pozycje.Pozycje ?? []) {
           if (!pozycjaZDokumentem.Dokument) {
-            console.log('Dokument pusty', pozycjaZDokumentem.Dokument)
+            // console.log('Dokument pusty', pozycjaZDokumentem.Dokument)
             continue
           }
-          // console.log('pozycjaZDokumentem', pozycjaZDokumentem.Opis)
 
           const values = ['Nalicz', 'Naleznosc', 'Naliczenie', 'nalicz', 'korekta']
           const regex = new RegExp(values.join('|'), 'i')
@@ -180,31 +171,21 @@ async function getTheData() {
             if (debug_i++ == 5) break outerloop //return
             await new Promise((resolve) => setTimeout(resolve, 1000))
             const dokumentZListaOplat = await finStore.loadDokument(identToGet)
-            console.log(
-              'Opis dokumentu z opłatami :',
-              dokumentZListaOplat?.Ident,
-              dokumentZListaOplat?.Opis,
-            )
+
             //NAJWAZNIEJSZE !!
             for (const szczegoly of dokumentZListaOplat?.Szczegoly?.Pozycje ?? []) {
-              console.log(
-                'miesiac;' + dayjs(finanseZaMiesiac.McStanu).format('YYYY-MM-DD'),
-                ';dokumentIdent;' + dokumentZListaOplat?.Ident,
-                ';sumaOplatZaMiesiac;' + dokumentZListaOplat?.Kwota,
-                ';oplata' + szczegoly.SkladnikOpl,
-                ';kwotaBrutto;' + szczegoly.Brutto,
-              )
+              // newFunction(finanseZaMiesiac, dokumentZListaOplat, szczegoly)
+              finStore.getLogSzczegolyOplatCsv(finanseZaMiesiac, dokumentZListaOplat!, szczegoly)
 
-              //  chartDataTemp.value.labels.push(dayjs(finanseZaMiesiac.McStanu).format('YYYY-MM-DD'))
-              // chartDataTemp.value.datasets[0].data.push(finans_pozycje.Obciazenia)
               const label = szczegoly.SkladnikOpl
               const values = data_y_datasets_label_data.get(label) || []
               values.push(szczegoly.Brutto)
               data_y_datasets_label_data.set(label, values)
             }
-          } else {
-            console.log('Brak dokumentów', pozycjaZDokumentem)
           }
+          // else {
+          // console.log('Brak dokumentów', pozycjaZDokumentem)
+          // }
         }
       }
     }

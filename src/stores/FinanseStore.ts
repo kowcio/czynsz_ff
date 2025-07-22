@@ -1,9 +1,10 @@
 import { defineStore } from 'pinia'
 import type { Finanse, HistoriaRachunku } from '@/models/EstateCare/DajDrzewoFinHistoria.ts'
 import ApiUrlsService from './ApiUrlsService'
-import type { DocumentSzczegoly } from '@/models/EstateCare/DajDokSzczegoly'
+import type { DocumentSzczegoly, Pozycja } from '@/models/EstateCare/DajDokSzczegoly'
 import type { ChartData } from '@/models/Charts'
 import axios from 'axios'
+import dayjs from 'dayjs'
 
 export interface MyFinanseStoreState {
   kontaFinansowe: string[]
@@ -13,6 +14,7 @@ export interface MyFinanseStoreState {
   loading: boolean
   error: unknown
   chartData: ChartData
+  csvData: string[]
 }
 
 export const useFinanseStore = defineStore('myFinanse', {
@@ -29,6 +31,7 @@ export const useFinanseStore = defineStore('myFinanse', {
         labels: [],
         datasets: [],
       },
+      csvData: [],
     }) as MyFinanseStoreState,
   getters: {
     // getters
@@ -36,9 +39,53 @@ export const useFinanseStore = defineStore('myFinanse', {
     getDokumenty: (state) => state.dokumenty,
     getFinanse: (state) => state.finanse,
     getHistoriaRachunku: (state) => state.historiaRachunku,
+    getLogSzczegolyOplatCsv: (state) => {
+      return (
+        finanseZaMiesiac: Finanse,
+        dokumentZListaOplat: DocumentSzczegoly,
+        szczegoly: Pozycja,
+      ) => {
+        const csvDataEntry =
+          `miesiac;${dayjs(finanseZaMiesiac.McStanu ?? '-').format('YYYY-MM-DD')};` +
+          `dokumentIdent;${dokumentZListaOplat.Ident ?? '-'};` +
+          `sumaOplatZaMiesiac;${dokumentZListaOplat.Kwota ?? '-'};` +
+          `oplata;${szczegoly.SkladnikOpl ?? '-'};` +
+          `kwotaBrutto;${szczegoly.Brutto ?? '-'}`.replace(/\s+/g, '_')
+        console.log(csvDataEntry)
+        state.csvData.push(csvDataEntry)
+      }
+    },
   },
 
   actions: {
+    async loadKontaFinansowe(): Promise<string[]> {
+      this.loading = true
+      this.error = null
+      const kontaFinansowe: string[] = []
+      try {
+        const url = 'https://rozliczenia.estatecare.pl/content/InetObsKontr/finanse'
+        if (!window.location.href.includes(url)) {
+          await window.open(url, 'self')
+        }
+        const elements = document.querySelectorAll('.app-konto-finansowe')
+        elements.forEach((element) => {
+          const adresDoRachunkuFinansowego = element.getAttribute('href') || ''
+          const regex = /\/content\/InetObsKontr\/finanse\/(\d+)/
+          const match = adresDoRachunkuFinansowego.match(regex)
+          if (match) {
+            kontaFinansowe.push(match[1])
+          }
+        })
+        console.log('Znaleziono konta finansowe:', kontaFinansowe.toString())
+        return kontaFinansowe
+      } catch (error: unknown) {
+        console.error('Failed to loadDokument:', error)
+        this.error = error || 'Unknown error'
+        return []
+      } finally {
+        this.loading = false
+      }
+    },
     async loadHistoriaRachunku(numerRachunku: string) {
       this.loading = true
       this.error = null
@@ -77,7 +124,13 @@ export const useFinanseStore = defineStore('myFinanse', {
           },
         })
         this.dokumenty = response.data.data
-        return response.data.data
+        const dokumentZListaOplat = response.data.data
+        // console.log(
+        //   'Opis dokumentu z opłatami :',
+        //   dokumentZListaOplat?.Ident,
+        //   dokumentZListaOplat?.Opis,
+        // )
+        return dokumentZListaOplat
       } catch (error: unknown) {
         console.error('Failed to loadDokument:', error)
         this.error = error || 'Unknown error'
