@@ -39,6 +39,8 @@ export const useFinanseStore = defineStore('myFinanse', {
     getDokumenty: (state) => state.dokumenty,
     getFinanse: (state) => state.finanse,
     getHistoriaRachunku: (state) => state.historiaRachunku,
+    getCsvData: (state) => state.csvData,
+
     getLogSzczegolyOplatCsv: (state) => {
       return (
         finanseZaMiesiac: Finanse,
@@ -76,6 +78,7 @@ export const useFinanseStore = defineStore('myFinanse', {
             kontaFinansowe.push(match[1])
           }
         })
+        kontaFinansowe.sort((a, b) => b.localeCompare(a))
         console.log('Znaleziono konta finansowe:', kontaFinansowe.toString())
         return kontaFinansowe
       } catch (error: unknown) {
