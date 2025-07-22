@@ -54,7 +54,7 @@ const chartOptions = {
   maintainAspectRatio: false,
   elements: {
     line: {
-      borderWidth: 1,
+      borderWidth: 2,
     },
   },
   title: {

@@ -129,7 +129,7 @@ async function getTheData() {
 
           const identToGet = pozycjaZDokumentem.Dokument?.Ident
           if (identToGet) {
-            if (debug_i++ == 3) break outerloop //return
+            if (debug_i++ == 6) break outerloop //return
             await new Promise((resolve) => setTimeout(resolve, 1000))
             const dokumentZListaOplat = await finStore.loadDokument(identToGet)
 
