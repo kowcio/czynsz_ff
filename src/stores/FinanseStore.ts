@@ -40,6 +40,30 @@ export const useFinanseStore = defineStore('myFinanse', {
     getFinanse: (state) => state.finanse,
     getHistoriaRachunku: (state) => state.historiaRachunku,
     getCsvData: (state) => state.csvData,
+    getCsvDataDownloadableTxt: (state) => {
+      return () => {
+        const csvData = JSON.parse(localStorage.getItem('csvData') ?? '') ?? [] ?? state.csvData
+        console.log('csvData', csvData)
+        const csvDataArr = csvData.map((row: string) => row.split(';'))
+        if (csvDataArr.length > 0) {
+          const txtContent = csvDataArr.map((row: string[]) => row.join(',')).join('\n')
+          const txtBlob = new Blob([txtContent], { type: 'text/plain' })
+          const txtUrl = URL.createObjectURL(txtBlob)
+          const txtLink = document.createElement('a')
+          txtLink.href = txtUrl
+
+          console.log('csvDataArr', csvDataArr)
+          const firstPart = csvDataArr[0][1]
+          const secondPart = csvDataArr[csvDataArr.length - 1][1]
+          const fileName = `oplaty_${firstPart}_${secondPart}.txt`
+
+          txtLink.download = fileName
+          txtLink.click()
+        } else {
+          console.log('Error: csvData is empty')
+        }
+      }
+    },
 
     getLogSzczegolyOplatCsv: (state) => {
       return (

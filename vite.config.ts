@@ -28,11 +28,20 @@ export default defineConfig({
       hook: 'writeBundle',
     }),
   ],
+  css: {
+    preprocessorOptions: {
+      scss: {
+        additionalData: '@import "quasar/dist/quasar.sass";',
+      },
+    },
+  },
   base: './', //Base public path when served in development or production.
+
   build: {
     outDir: 'dist',
     minify: false,
     cssMinify: false,
+
     // manifest: 'manifest.json',
     assetsDir: 'js',
     // rollupOptions: {

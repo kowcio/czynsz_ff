@@ -9,9 +9,11 @@
     <ChartComposite :chartData="monthlyChart" class="chart-container" />
     <ChartComposite :chartData="everyItemChart" class="chart-container" />
   </div>
-  <button @click="getTheData">Pokaz wykresy</button>
-  <button @click="getCsvData">Pobierz csv</button>
-
+  <div class="row q-ma-xl">
+    <button @click="getTheData">Pokaz wykresy</button>
+    <button @click="getCsvData">Pobierz csv</button>
+    <button @click="loadChartsFromLocalStorage">Load charts from local storage</button>
+  </div>
   <!-- <li v-for="wpis in finanse" :key="wpis.RejIdent">
     {{ wpis.McStanu }} - {{ wpis.Opis }} - {{ wpis.DoZaplaty }} -{{ wpis.Obciazenia }} -
     {{ wpis.Uznania }}
@@ -66,7 +68,7 @@ const everyItemChart = ref<ChartData>({
   datasets: [], //label + data - dane
 })
 
-const datesForChart: string[] = []
+const datesForChart = ref<string[]>([])
 const monthlyValues: number[] = []
 const everyItemMapValuesPerMonth = new Map<string, number[]>()
 
@@ -74,8 +76,8 @@ async function getTheData() {
   const values = ['Nalicz', 'Naleznosc', 'Naliczenie', 'nalicz', 'korekta']
 
   let debug_i = 0
-  kontaFinansowe.value = await finStore.loadKontaFinansowe()
 
+  kontaFinansowe.value = await finStore.loadKontaFinansowe()
   outerloop: for (const numerRachunku of kontaFinansowe.value) {
     finanse.value = await finStore.loadHistoriaRachunku(numerRachunku)
     for (const finanseZaMiesiac of finanse.value) {
@@ -83,7 +85,7 @@ async function getTheData() {
         // console.log('Brak wpisów w miesiącu ', finanseZaMiesiac.McStanu, finanseZaMiesiac.Opis)
         continue
       }
-      datesForChart.push(dayjs(finanseZaMiesiac.McStanu).format('YYYY-MM-DD'))
+      datesForChart.value.push(dayjs(finanseZaMiesiac.McStanu).format('YYYY-MM-DD'))
 
       // console.log('Finanse za miesiac', finanseZaMiesiac.McStanu, finanseZaMiesiac.Opis)
       for (const finans_pozycje of finanseZaMiesiac.Pozycje ?? []) {
@@ -93,9 +95,7 @@ async function getTheData() {
         //   finans_pozycje.Opis,
         //   finans_pozycje.Obciazenia,
         // )
-        //CHARTS
         monthlyValues.push(finans_pozycje.Obciazenia)
-        // monthlyChart.value.datasets[0].data.push(finans_pozycje.Obciazenia)
 
         // const dokumentIds = finans_pozycje.Pozycje?.map(
         //   (pozycja) =>
@@ -129,8 +129,7 @@ async function getTheData() {
 
           const identToGet = pozycjaZDokumentem.Dokument?.Ident
           if (identToGet) {
-            // console.log('debug_i:', debug_i)
-            if (debug_i++ == 2) break outerloop //return
+            if (debug_i++ == 3) break outerloop //return
             await new Promise((resolve) => setTimeout(resolve, 1000))
             const dokumentZListaOplat = await finStore.loadDokument(identToGet)
 
@@ -156,17 +155,16 @@ async function getTheData() {
   //make csv
   const csvData = finStore.getCsvData
   localStorage.setItem('csvData', JSON.stringify(csvData))
-
+  datesForChart.value = [...new Set(datesForChart.value)].sort((a, b) => a.localeCompare(b))
   // Assign aggregated data to chartData2
   monthlyChart.value = {
     type: 'line',
-    labels: datesForChart,
+    labels: datesForChart.value,
     datasets: [{ ...monthlyChart.value.datasets[0], data: monthlyValues }],
   }
-
   everyItemChart.value = {
     type: 'line',
-    labels: datesForChart,
+    labels: datesForChart.value,
     datasets: Array.from(everyItemMapValuesPerMonth.entries()).map(([key, value]) => ({
       label: key,
       data: value,
@@ -174,6 +172,9 @@ async function getTheData() {
       backgroundColor: getRandomColor(),
     })),
   }
+
+  localStorage.setItem('monthlyChart', JSON.stringify(monthlyChart.value))
+  localStorage.setItem('everyItemChart', JSON.stringify(everyItemChart.value))
 }
 
 function getRandomColor() {
@@ -185,22 +186,15 @@ function getRandomColor() {
   return color
 }
 
-function getCsvData() {
-  const csvData = JSON.parse(localStorage.getItem('csvData') ?? '') ?? [] ?? finStore.getCsvData
-  console.log('csvData', csvData)
-  const csvDataArr = csvData.map((row: string) => row.split(';')) // split each row into an array of columns
+async function getCsvData() {
+  return await finStore.getCsvDataDownloadableTxt()
+}
 
-  if (csvDataArr.length > 0) {
-    const txtContent = csvDataArr.map((row: string[]) => row.join(',')).join('\n')
-    const txtBlob = new Blob([txtContent], { type: 'text/plain' })
-    const txtUrl = URL.createObjectURL(txtBlob)
-    const txtLink = document.createElement('a')
-    txtLink.href = txtUrl
-    txtLink.download = 'data.csv'
-    txtLink.click()
-  } else {
-    console.log('Error: csvData is empty')
-  }
+function loadChartsFromLocalStorage() {
+  const monthlyChartData = JSON.parse(localStorage.getItem('monthlyChart') || '[]')
+  const everyItemChartData = JSON.parse(localStorage.getItem('everyItemChart') || '[]')
+  monthlyChart.value = monthlyChartData
+  everyItemChart.value = everyItemChartData
 }
 </script>
 

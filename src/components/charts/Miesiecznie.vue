@@ -1,29 +1,30 @@
 <template>
   <div class="chart-composite">
     <h3>Chart</h3>
-    <Bar id="my-chart-id" :options="chartOptions" :data="props.chartData" />
+    <Line id="my-chart-id" :options="chartOptions" :data="props.chartData" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { Bar } from 'vue-chartjs'
+import { Line } from 'vue-chartjs'
 import {
   Chart as ChartJS,
   Title,
   Tooltip,
   Legend,
+  PointElement,
   BarElement,
+  LineElement,
   CategoryScale,
   LinearScale,
   type ChartData,
 } from 'chart.js'
-import { reactive } from 'vue'
 
 const props = withDefaults(
   defineProps<{
     title?: string
     width?: string
-    chartData?: ChartData<'bar', number[], string>
+    chartData?: ChartData<'line', number[], string>
   }>(),
   {
     title: '',
@@ -36,7 +37,16 @@ const props = withDefaults(
   },
 )
 
-ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
+ChartJS.register(
+  Title,
+  Tooltip,
+  Legend,
+  BarElement,
+  PointElement,
+  LineElement,
+  CategoryScale,
+  LinearScale,
+)
 
 const chartOptions = {
   responsive: true,
@@ -49,11 +59,11 @@ const chartOptions = {
   },
   title: {
     display: true,
-    text: 'Chart Title',
+    text: 'Chart 333 Title',
   },
   legend: {
     display: true,
-    position: 'bottom',
+    position: 'left',
   },
   tooltips: {
     enabled: true,
@@ -61,8 +71,4 @@ const chartOptions = {
 }
 </script>
 
-<style scoped>
-.chart-width {
-  width: var(--width);
-}
-</style>
+<style scoped></style>
