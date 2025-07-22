@@ -206,6 +206,58 @@ async function getTheData() {
     })),
   }
 
+  // 1. Collect all months and all unique SkladnikOpl
+  const monthSet = new Set<string>()
+  const skladnikSet = new Set<string>()
+  const dataMap: Record<string, Record<string, number>> = {}
+
+  outerloop: for (const numerRachunku of kontaFinansowe.value) {
+    finanse.value = await finStore.loadHistoriaRachunku(numerRachunku)
+    for (const finanseZaMiesiac of finanse.value) {
+      if (!finanseZaMiesiac.Pozycje) continue
+      const month = dayjs(finanseZaMiesiac.McStanu).format('YYYY-MM')
+      monthSet.add(month)
+      for (const finans_pozycje of finanseZaMiesiac.Pozycje ?? []) {
+        for (const pozycjaZDokumentem of finans_pozycje.Pozycje ?? []) {
+          if (!pozycjaZDokumentem.Dokument) continue
+          const values = ['Nalicz', 'Naleznosc', 'Naliczenie', 'nalicz', 'korekta']
+          const regex = new RegExp(values.join('|'), 'i')
+          if (!regex.test(pozycjaZDokumentem.Dokument?.Opis ?? '')) continue
+          const identToGet = pozycjaZDokumentem.Dokument?.Ident
+          if (identToGet) {
+            if (debug_i++ == 5) break outerloop
+            await new Promise((resolve) => setTimeout(resolve, 1000))
+            const dokumentZListaOplat = await finStore.loadDokument(identToGet)
+            for (const szczegoly of dokumentZListaOplat?.Szczegoly?.Pozycje ?? []) {
+              const skladnik = szczegoly.SkladnikOpl
+              skladnikSet.add(skladnik)
+              // Map: month -> skladnik -> value
+              if (!dataMap[skladnik]) dataMap[skladnik] = {}
+              dataMap[skladnik][month] = (dataMap[skladnik][month] || 0) + szczegoly.Brutto
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // 2. Prepare labels and datasets for chartData2
+  const months = Array.from(monthSet).sort()
+  const skladniki = Array.from(skladnikSet)
+  const datasets = skladniki.map((skladnik, idx) => ({
+    label: skladnik,
+    backgroundColor: idx % 2 === 0 ? '#f87979' : '#79f8f8',
+    data: months.map(month => dataMap[skladnik][month] || 0),
+    borderWidth: 1,
+    borderColor: idx % 2 === 0 ? '#f87979' : '#79f8f8',
+  }))
+
+  chartData2.value = {
+    ...chartData2.value,
+    labels: months,
+    datasets,
+  }
+
   finStore.saveChartDate(chartDataTemp.value)
   chartData.value = chartDataTemp.value
   console.log('Chart data', chartData.value)
