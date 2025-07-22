@@ -250,6 +250,6 @@ function getRandomColor() {
 }
 .chart-container {
   width: 2000px;
-  height: 2000px;
+  height: 500px;
 }
 </style>
